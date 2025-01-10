@@ -1,0 +1,320 @@
+import pandas as pd
+import numpy as np
+
+
+# detect unique values & if col have binary and unary data 
+def print_unique_values_summary(df, selected_columns='all'):
+    unary_columns = []  # List to store tuples of columns with exactly one unique value
+
+    # If 'all' is passed, use all columns in the DataFrame
+    if selected_columns == 'all':
+        selected_columns = df.columns.tolist()
+
+    # Check if selected columns exist in the DataFrame
+    for col_name in selected_columns:
+        if col_name in df.columns:
+            # Get unique values and their counts
+            unique_counts = df[col_name].value_counts()
+
+            # Reset index to get a DataFrame and rename columns properly
+            unique_count_df = unique_counts.reset_index()
+            unique_count_df.columns = [col_name, 'count']
+
+            print(f"Unique values and counts for column: '{col_name}'")
+            print(unique_count_df)
+            print("-" * 40)  # Separator for readability
+
+            # Check if the column has exactly one unique value
+            if len(df[col_name].unique()) == 1:
+                # Get the single unique value
+                unique_value = df[col_name].unique()[0]
+
+                # Create a tuple with column name and the single unique value
+                unary_columns.append((col_name, str(unique_value)))
+        else:
+            print(f"Column '{col_name}' does not exist in the DataFrame.")
+            print("-" * 40)  # Separator for readability
+
+    # Print warning if there are columns with only one unique value
+    if unary_columns:
+        print("WARNING: Detect columns with only 1 unique value.")
+        print("The following displayed is a list of (col name, the one unique value)")
+        print(unary_columns)
+        print("-" * 40)  # Separator for readability
+    else:
+        print("FUNCTION FINISHED, detected no columns with only 1 unique values which is good.")
+
+
+def get_binary_columns(df, selected_columns='all'):
+    binary_column_info = []  # List to store tuples of columns with exactly two unique values
+    binary_column_names = []  # List to store the names of binary columns
+
+    # If 'all' is passed, use all columns in the DataFrame
+    if selected_columns == 'all':
+        selected_columns = df.columns.tolist()
+
+    # Check if selected columns exist in the DataFrame
+    for col_name in selected_columns:
+        if col_name in df.columns:
+            # Check if the column has exactly two unique values
+            if len(df[col_name].unique()) == 2:
+                # Extract the two unique values
+                unique_values = df[col_name].unique()
+                binary_value_1, binary_value_2 = unique_values[0], unique_values[1]
+
+                # Create a tuple with column name and the two unique values
+                binary_column_info.append((col_name, str(binary_value_1), str(binary_value_2)))
+                # Append the column name to the binary column names list
+                binary_column_names.append(col_name)
+
+    return binary_column_info, binary_column_names
+
+
+def get_unary_columns(df, selected_columns='all'):
+    unary_column_info = []  # List to store tuples of columns with exactly one unique value
+    unary_column_names = []  # List to store the names of unary columns
+
+    # If 'all' is passed, use all columns in the DataFrame
+    if selected_columns == 'all':
+        selected_columns = df.columns.tolist()
+
+    # Check if selected columns exist in the DataFrame
+    for col_name in selected_columns:
+        if col_name in df.columns:
+            # Check if the column has exactly one unique value
+            if len(df[col_name].unique()) == 1:
+                # Get the single unique value
+                unique_value = df[col_name].unique()[0]
+
+                # Create a tuple with column name and the single unique value
+                unary_column_info.append((col_name, str(unique_value)))
+                # Append the column name to the unary column names list
+                unary_column_names.append(col_name)
+
+    return unary_column_info, unary_column_names
+
+
+def test_generate_binary_unary_df():
+    data = {
+        'A': [3,4,3,4,3,4,3,4],
+        'B': [7,8,7,8,7,8,7,8],
+        'C': [0,0,0,0,0,0,0,0],
+        'D': [1, 2, 3, 4, 5, 1000, 7, 8]
+    }
+
+    df_binary_unary = pd.DataFrame(data)
+
+    return df_binary_unary
+
+
+
+# Col Names
+def replace_spaces_in_col_names(df, columns='all'):
+
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    
+    new_columns = {col: '_'.join(col.split()) if col in columns else col for col in df.columns}
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
+def convert_col_names_to_lowercase(df, columns='all'):
+
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    
+    new_columns = {col: col.lower() if col in columns else col for col in df.columns}
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
+def rename_col_names(df, rename_dict):
+    for old_name, new_name in rename_dict.items():
+
+        # Check if the source column exists
+        if old_name not in df.columns:
+            print(f"Warning: Column '{old_name}' not found in DataFrame.")
+
+        # Check if the target column name already exists
+        if new_name in df.columns:
+            print(f"Warning: Column '{new_name}' already exists in DataFrame. Conversion might already be done.")
+            continue
+
+        # Rename the column
+        df.rename(columns={old_name: new_name}, inplace=True)
+        print(f"Column '{old_name}' successfully renamed to '{new_name}'.")
+
+    return df
+
+
+
+# Col Values
+def replace_spaces_in_col_values(df, columns='all'):
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    df[columns] = df[columns].applymap(lambda x: '_'.join(x.split()) if isinstance(x, str) else x)
+    return df
+
+
+def convert_col_values_to_lowercase(df, columns='all'):
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    df[columns] = df[columns].applymap(lambda x: x.lower() if isinstance(x, str) else x)
+    return df
+
+
+def replace_col_values(df, columns='all', replacements=None):
+    '''
+    replacements uses a dict
+    for example: 
+        {'f':'g', 2:15 }
+    works with either numeric or string values, and do both at the same time
+    '''
+    if replacements is None:
+        raise ValueError("Replacements dictionary cannot be None.")
+
+    # Validate columns
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    elif isinstance(columns, list):
+        for col in columns:
+            if col not in df.columns:
+                print(f"Warning: Column '{col}' not found in DataFrame.")
+    else:
+        raise TypeError("Columns should be 'all' or a list of column names.")
+
+    # Check and apply replacements
+    for old_value, new_value in replacements.items():
+        if old_value not in df[columns].values:
+            print(f"Warning: Value '{old_value}' not found in the specified columns.")
+            continue
+
+        df[columns] = df[columns].replace({old_value: new_value})
+        print(f"Replaced all occurrences of '{old_value}' with '{new_value}'.")
+
+    return df
+
+
+
+# Convert specified values in a column to binary 1 or 0
+def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
+    '''
+    Converts specified values to binary 1 and 0 based on user input (as strings or lists)
+    and returns the updated dataframe, along with lists of incompatible values and rows.
+
+    Parameters:
+        df (pd.DataFrame): Input dataframe.
+        col_name (str): Column to modify.
+        values_to_1 (str or list): Value(s) to be converted to 1.
+        values_to_0 (str or list): Value(s) to be converted to 0.
+
+    Returns:
+        pd.DataFrame: Updated dataframe.
+        list: List of incompatible value tuples (row index, value).
+        list: List of row indices with incompatible values.
+    '''
+
+    # Normalize input lists (convert to list if not already iterable)
+    if isinstance(values_to_1, str):
+        values_to_1 = [values_to_1]
+    if isinstance(values_to_0, str):
+        values_to_0 = [values_to_0]
+
+    # Normalize the input lists (convert all elements to lowercase strings for consistency)
+    normalized_values_to_1 = {str(val).strip().lower() for val in values_to_1}
+    normalized_values_to_0 = {str(val).strip().lower() for val in values_to_0}
+
+    incompatible_rows_info = []  # List to record incompatible values (as tuples)
+    incompatible_rows = []  # List to record rows with incompatible values
+
+    # Check if the column already contains values 0 or 1
+    if df[col_name].isin([0, 1]).all():
+        print(f'{col_name} column has already been converted thus no action is taken')
+        return df, incompatible_rows_info, incompatible_rows
+
+    # Iterate through the dataframe
+    for idx, value in df[col_name].items():
+        # Normalize the value from the dataframe
+        cleaned_value = str(value).strip().lower()
+
+        # Check if the value is neither in values_to_1 nor values_to_0, and not already binary
+        if cleaned_value not in normalized_values_to_1 | normalized_values_to_0 | {'1', '0'}:
+            incompatible_rows_info.append((idx, value))  # Record incompatible value with row index
+            incompatible_rows.append(idx)  # Record row index of incompatible value
+
+    # If there is at least one incompatible value, return the original dataframe and lists
+    if len(incompatible_rows_info) != 0:
+        print(f'{col_name} column has {len(incompatible_rows)} incompatible rows')
+        return df, incompatible_rows_info, incompatible_rows
+    else:
+        # Otherwise, replace the specified values_to_1 with 1 and values_to_0 with 0
+        df[col_name] = df[col_name].apply(
+            lambda x: 1 if str(x).strip().lower() in normalized_values_to_1
+            else (0 if str(x).strip().lower() in normalized_values_to_0 else x)
+        )
+
+        # Convert the column data type to int if no incompatibles
+        df[col_name] = df[col_name].astype(int)
+
+        # Feedback that conversion was successful
+        print(f'{col_name} column has been fully converted')
+
+    # Return the updated dataframe and the lists of incompatibles
+    return df, incompatible_rows_info, incompatible_rows
+
+
+
+# Detect Outliers
+def detect_outliers_in_col(df, col_name):
+    
+    print(f"Detecting outliers for the '{col_name}' column.")
+
+    # Check if the column exists in the DataFrame
+    if col_name not in df.columns:
+        raise ValueError(f"Column '{col_name}' not found in the DataFrame.")
+    
+    # Calculate Q1, Q3, and IQR for the specified column
+    Q1 = df[col_name].quantile(0.25)
+    Q3 = df[col_name].quantile(0.75)
+    IQR = Q3 - Q1
+    
+    # Define the lower and upper bounds for outliers
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    
+    # Find outliers: values outside the bounds
+    outliers = df[(df[col_name] < lower_bound) | (df[col_name] > upper_bound)]
+    
+    # Get the list of outlier rows and values as tuples (index, value)
+    outlier_rows_info = list(outliers[[col_name]].itertuples(index=True, name=None))
+    
+    # List of just the outlier rows
+    outlier_rows = outliers.index.tolist()
+
+    # print out outlier analysis
+    print(f"Lower bounds:   {lower_bound}")
+    print(f"Q1:             {Q1}")
+    print(f"Q3:             {Q3}")
+    print(f"Upper bounds:   {upper_bound}")
+    
+    # Determine if there are any outliers and print the appropriate message
+    if len(outlier_rows) == 0:
+        print(f"'{col_name}' column has no outliers.")
+    else:
+        print(f"'{col_name}' column has {len(outlier_rows)} outliers.")
+    
+    # Return a tuple with the requested information
+    return outlier_rows_info, outlier_rows
+
+
+def test_generate_outlier_df():
+    data = {
+        'A': [10, 12, 14, 1000, 15, 13, 11, 18],
+        'B': [1, 2, 3, 4, 5, 1000, 7, 8],
+        'C': [50, 55, 60, 120, 65, 70, 75, 80]
+    }
+
+    df_outliers = pd.DataFrame(data)
+
+    return df_outliers
