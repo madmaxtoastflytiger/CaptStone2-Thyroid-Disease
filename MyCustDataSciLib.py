@@ -3,15 +3,21 @@ import numpy as np
 
 
 # detect unique values & if col have binary and unary data 
-def print_unique_values_summary(df, selected_columns='all'):
+def print_unique_values_summary(df, selected_col='all'):
+    '''
+    Parameters:
+        df (pd.DataFrame): Input dataframe.
+        selected_col: either 'all' will do all columns, or a list of columns like ['col1','col2'], this is needed if doing one column, kept like this incase a column is called 'all'
+    '''
+
     unary_columns = []  # List to store tuples of columns with exactly one unique value
 
     # If 'all' is passed, use all columns in the DataFrame
-    if selected_columns == 'all':
-        selected_columns = df.columns.tolist()
+    if selected_col == 'all':
+        selected_col = df.columns.tolist()
 
     # Check if selected columns exist in the DataFrame
-    for col_name in selected_columns:
+    for col_name in selected_col:
         if col_name in df.columns:
             # Get unique values and their counts
             unique_counts = df[col_name].value_counts()
