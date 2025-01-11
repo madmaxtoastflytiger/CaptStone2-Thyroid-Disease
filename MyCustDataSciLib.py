@@ -151,6 +151,22 @@ def test_generate_outlier_df():
 
 # EDA #
 
+# Create a DataFrame with different data types in each column
+def test_generate_diff_dtype_col_df():
+    data = {
+        'integers': [1, 2, 3, 4, 5],  # Integer column
+        'floats': [1.1, 2.2, 3.3, 4.4, 5.5],  # Float column
+        'strings': ['a', 'b', 'c', 'd', 'e'],  # String (object) column
+        'categories': pd.Categorical(['low', 'medium', 'high', 'medium', 'low']),  # Categorical column
+        'booleans': [True, False, True, False, True],  # Boolean column
+        'dates': pd.to_datetime(['2022-01-01', '2023-02-01', '2023-03-01', '2023-04-01', '2023-05-01']),  # Datetime column
+        'timedelta': pd.to_timedelta([1, 2, 3, 4, 5], unit='D'),  # Timedelta column
+        'complex_numbers': [complex(1, 1), complex(2, 2), complex(3, 3), complex(4, 4), complex(5, 5)]  # Complex numbers
+    }
+
+    df_diff_dtype_col = pd.DataFrame(data)
+
+    return df_diff_dtype_col
 
 
 # Feature Engineering #
