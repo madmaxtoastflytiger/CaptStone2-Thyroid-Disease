@@ -2,12 +2,165 @@ import pandas as pd
 import numpy as np
 
 
+# Data Wrangling # 
+
+# Col Names
+def replace_spaces_in_col_names(df, columns='all'):
+
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    
+    new_columns = {col: '_'.join(col.split()) if col in columns else col for col in df.columns}
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
+def convert_col_names_to_lowercase(df, columns='all'):
+
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    
+    new_columns = {col: col.lower() if col in columns else col for col in df.columns}
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
+def rename_col_names(df, rename_dict):
+    for old_name, new_name in rename_dict.items():
+
+        # Check if the source column exists
+        if old_name not in df.columns:
+            print(f"Warning: Column '{old_name}' not found in DataFrame.")
+
+        # Check if the target column name already exists
+        if new_name in df.columns:
+            print(f"Warning: Column '{new_name}' already exists in DataFrame. Conversion might already be done.")
+            continue
+
+        # Rename the column
+        df.rename(columns={old_name: new_name}, inplace=True)
+        print(f"Column '{old_name}' successfully renamed to '{new_name}'.")
+
+    return df
+
+
+
+# Col Values
+def replace_spaces_in_col_values(df, columns='all'):
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    df[columns] = df[columns].applymap(lambda x: '_'.join(x.split()) if isinstance(x, str) else x)
+    return df
+
+
+def convert_col_values_to_lowercase(df, columns='all'):
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    df[columns] = df[columns].applymap(lambda x: x.lower() if isinstance(x, str) else x)
+    return df
+
+
+def replace_col_values(df, columns='all', replacements=None):
+    '''
+    replacements uses a dict
+    for example: 
+        {'f':'g', 2:15 }
+    works with either numeric or string values, and do both at the same time
+    '''
+    if replacements is None:
+        raise ValueError("Replacements dictionary cannot be None.")
+
+    # Validate columns
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+    elif isinstance(columns, list):
+        for col in columns:
+            if col not in df.columns:
+                print(f"Warning: Column '{col}' not found in DataFrame.")
+    else:
+        raise TypeError("Columns should be 'all' or a list of column names.")
+
+    # Check and apply replacements
+    for old_value, new_value in replacements.items():
+        if old_value not in df[columns].values:
+            print(f"Warning: Value '{old_value}' not found in the specified columns.")
+            continue
+
+        df[columns] = df[columns].replace({old_value: new_value})
+        print(f"Replaced all occurrences of '{old_value}' with '{new_value}'.")
+
+    return df
+
+
+
+# Detect Outliers
+def detect_outliers_in_col(df, col_name):
+    
+    print(f"Detecting outliers for the '{col_name}' column.")
+
+    # Check if the column exists in the DataFrame
+    if col_name not in df.columns:
+        raise ValueError(f"Column '{col_name}' not found in the DataFrame.")
+    
+    # Calculate Q1, Q3, and IQR for the specified column
+    Q1 = df[col_name].quantile(0.25)
+    Q3 = df[col_name].quantile(0.75)
+    IQR = Q3 - Q1
+    
+    # Define the lower and upper bounds for outliers
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    
+    # Find outliers: values outside the bounds
+    outliers = df[(df[col_name] < lower_bound) | (df[col_name] > upper_bound)]
+    
+    # Get the list of outlier rows and values as tuples (index, value)
+    outlier_rows_info = list(outliers[[col_name]].itertuples(index=True, name=None))
+    
+    # List of just the outlier rows
+    outlier_rows = outliers.index.tolist()
+
+    # print out outlier analysis
+    print(f"Lower bounds:   {lower_bound}")
+    print(f"Q1:             {Q1}")
+    print(f"Q3:             {Q3}")
+    print(f"Upper bounds:   {upper_bound}")
+    
+    # Determine if there are any outliers and print the appropriate message
+    if len(outlier_rows) == 0:
+        print(f"'{col_name}' column has no outliers.")
+    else:
+        print(f"'{col_name}' column has {len(outlier_rows)} outliers.")
+    
+    # Return a tuple with the requested information
+    return outlier_rows_info, outlier_rows
+
+
+def test_generate_outlier_df():
+    data = {
+        'A': [10, 12, 14, 1000, 15, 13, 11, 18],
+        'B': [1, 2, 3, 4, 5, 1000, 7, 8],
+        'C': [50, 55, 60, 120, 65, 70, 75, 80]
+    }
+
+    df_outliers = pd.DataFrame(data)
+
+    return df_outliers
+
+
+
+# EDA #
+
+
+
+# Feature Engineering #
+
 # detect unique values & if col have binary and unary data 
 def print_unique_values_summary(df, selected_col='all'):
     '''
     Parameters:
         df (pd.DataFrame): Input dataframe.
-        selected_col: either 'all' will do all columns, or a list of columns like ['col1','col2'], this is needed if doing one column, kept like this incase a column is called 'all'
+        selected_col: either 'all' will do all columns, or a list of columns like ['col1','col2'], this is needed if doing one column, kept like this incase a column is
     '''
 
     unary_columns = []  # List to store tuples of columns with exactly one unique value
@@ -113,96 +266,6 @@ def test_generate_binary_unary_df():
     return df_binary_unary
 
 
-
-# Col Names
-def replace_spaces_in_col_names(df, columns='all'):
-
-    if columns == 'all':
-        columns = df.columns  # Use all columns if 'all' is specified
-    
-    new_columns = {col: '_'.join(col.split()) if col in columns else col for col in df.columns}
-    df.rename(columns=new_columns, inplace=True)
-    return df
-
-
-def convert_col_names_to_lowercase(df, columns='all'):
-
-    if columns == 'all':
-        columns = df.columns  # Use all columns if 'all' is specified
-    
-    new_columns = {col: col.lower() if col in columns else col for col in df.columns}
-    df.rename(columns=new_columns, inplace=True)
-    return df
-
-
-def rename_col_names(df, rename_dict):
-    for old_name, new_name in rename_dict.items():
-
-        # Check if the source column exists
-        if old_name not in df.columns:
-            print(f"Warning: Column '{old_name}' not found in DataFrame.")
-
-        # Check if the target column name already exists
-        if new_name in df.columns:
-            print(f"Warning: Column '{new_name}' already exists in DataFrame. Conversion might already be done.")
-            continue
-
-        # Rename the column
-        df.rename(columns={old_name: new_name}, inplace=True)
-        print(f"Column '{old_name}' successfully renamed to '{new_name}'.")
-
-    return df
-
-
-
-# Col Values
-def replace_spaces_in_col_values(df, columns='all'):
-    if columns == 'all':
-        columns = df.columns  # Use all columns if 'all' is specified
-    df[columns] = df[columns].applymap(lambda x: '_'.join(x.split()) if isinstance(x, str) else x)
-    return df
-
-
-def convert_col_values_to_lowercase(df, columns='all'):
-    if columns == 'all':
-        columns = df.columns  # Use all columns if 'all' is specified
-    df[columns] = df[columns].applymap(lambda x: x.lower() if isinstance(x, str) else x)
-    return df
-
-
-def replace_col_values(df, columns='all', replacements=None):
-    '''
-    replacements uses a dict
-    for example: 
-        {'f':'g', 2:15 }
-    works with either numeric or string values, and do both at the same time
-    '''
-    if replacements is None:
-        raise ValueError("Replacements dictionary cannot be None.")
-
-    # Validate columns
-    if columns == 'all':
-        columns = df.columns  # Use all columns if 'all' is specified
-    elif isinstance(columns, list):
-        for col in columns:
-            if col not in df.columns:
-                print(f"Warning: Column '{col}' not found in DataFrame.")
-    else:
-        raise TypeError("Columns should be 'all' or a list of column names.")
-
-    # Check and apply replacements
-    for old_value, new_value in replacements.items():
-        if old_value not in df[columns].values:
-            print(f"Warning: Value '{old_value}' not found in the specified columns.")
-            continue
-
-        df[columns] = df[columns].replace({old_value: new_value})
-        print(f"Replaced all occurrences of '{old_value}' with '{new_value}'.")
-
-    return df
-
-
-
 # Convert specified values in a column to binary 1 or 0
 def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
     '''
@@ -271,56 +334,4 @@ def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
 
 
 
-# Detect Outliers
-def detect_outliers_in_col(df, col_name):
-    
-    print(f"Detecting outliers for the '{col_name}' column.")
-
-    # Check if the column exists in the DataFrame
-    if col_name not in df.columns:
-        raise ValueError(f"Column '{col_name}' not found in the DataFrame.")
-    
-    # Calculate Q1, Q3, and IQR for the specified column
-    Q1 = df[col_name].quantile(0.25)
-    Q3 = df[col_name].quantile(0.75)
-    IQR = Q3 - Q1
-    
-    # Define the lower and upper bounds for outliers
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    
-    # Find outliers: values outside the bounds
-    outliers = df[(df[col_name] < lower_bound) | (df[col_name] > upper_bound)]
-    
-    # Get the list of outlier rows and values as tuples (index, value)
-    outlier_rows_info = list(outliers[[col_name]].itertuples(index=True, name=None))
-    
-    # List of just the outlier rows
-    outlier_rows = outliers.index.tolist()
-
-    # print out outlier analysis
-    print(f"Lower bounds:   {lower_bound}")
-    print(f"Q1:             {Q1}")
-    print(f"Q3:             {Q3}")
-    print(f"Upper bounds:   {upper_bound}")
-    
-    # Determine if there are any outliers and print the appropriate message
-    if len(outlier_rows) == 0:
-        print(f"'{col_name}' column has no outliers.")
-    else:
-        print(f"'{col_name}' column has {len(outlier_rows)} outliers.")
-    
-    # Return a tuple with the requested information
-    return outlier_rows_info, outlier_rows
-
-
-def test_generate_outlier_df():
-    data = {
-        'A': [10, 12, 14, 1000, 15, 13, 11, 18],
-        'B': [1, 2, 3, 4, 5, 1000, 7, 8],
-        'C': [50, 55, 60, 120, 65, 70, 75, 80]
-    }
-
-    df_outliers = pd.DataFrame(data)
-
-    return df_outliers
+# Modeling #
