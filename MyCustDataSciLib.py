@@ -1,5 +1,9 @@
 import pandas as pd
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.stats import chi2_contingency
 
 
 # Data Wrangling # 
@@ -151,6 +155,59 @@ def test_generate_outlier_df():
 
 # EDA #
 
+def visualize_outliers(df, col_name):
+    plt.figure(figsize=(6, 4))  # Adjusted size for a smaller plot
+    sns.boxplot(
+        x=df[col_name], 
+        whis=1.5, 
+        showmeans=True,  # Optional to show mean as a dot
+        flierprops={"marker": "o", "color": "red", "markersize": 5}  # Style for outliers
+    )
+    plt.title(f'Box-and-Whisker Plot for {col_name}', fontsize=14)
+    plt.xlabel(col_name, fontsize=12)
+    plt.show()
+
+
+def quick_bar_graph(df, col_name):
+    df[col_name].value_counts().plot(kind='bar', figsize=(5, 2.5))
+    plt.title(f"Bar Graph of '{col_name}' Column")
+    plt.xlabel(col_name)
+    plt.ylabel('Count')
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+def quick_histogram(df, col_name, histo_bins=50):
+    # reminder if not enough data points for bins then will have empty bars inbetween. bins merge existing data bar
+
+    # df[col_name].plot(kind='hist', bins=histo_bins, figsize=(5, 2.5), edgecolor='black') # old code
+    
+    plt.figure(figsize=(5, 2.5))
+    sns.histplot(df[col_name], bins=histo_bins, kde=True, edgecolor='black')
+    plt.title(f"Histogram of '{col_name}' Column")
+    plt.xlabel(col_name)
+    plt.ylabel('Frequency')
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+def plot_all_graphs(df, col_names='all', histo_bins = 50):
+    if col_names == 'all':
+        col_names = df.columns.tolist()
+    
+    for col_name in col_names:
+        col_type = df[col_name].dtype
+        
+        # Check if the column is numeric (integer or float)
+        if col_type in ['int64', 'int32', 'int16', 'int8', 'float64', 'float32']:
+            quick_histogram(df, col_name, histo_bins)
+        # Check if the column is string, object, or category for bar plot
+        elif col_type in ['object', 'category', 'string']:
+            quick_bar_graph(df, col_name)
+        # If the column is not a supported type, print a message
+        else:
+            print(f"Did not graph column '{col_name}' because it is of type {col_type}.")
+
 # Create a DataFrame with different data types in each column
 def test_generate_diff_dtype_col_df():
     data = {
@@ -167,6 +224,126 @@ def test_generate_diff_dtype_col_df():
     df_diff_dtype_col = pd.DataFrame(data)
 
     return df_diff_dtype_col
+
+
+def quick_stacked_bar_graph (df, col_each_stack, each_col):
+    # Create a contingency table
+    contingency_table = pd.crosstab(df[col_each_stack], df[each_col], normalize='columns') * 100
+
+    # Plot the stacked bar chart
+    contingency_table.T.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='viridis')
+
+    # Add titles and labels
+    plt.title(f"Proportion of '{col_each_stack}' Categories Across '{each_col}'", fontsize=14)
+    plt.xlabel(f"'{each_col}' column", fontsize=12)
+    plt.ylabel(f"Percentage of '{col_each_stack}' Categories", fontsize=12)
+    plt.legend(title=col_each_stack, bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+
+def quick_chi_square_testing(df, col1, col2, set_p_value = 0.05): 
+    # reminder - Chi-Square testing is based on comparing observed frequencies to expected frequencies under the assumption that the two variables are independent. And if the p value is lower than 5% means that the 2 columns are possibly dependent 
+
+    print(f"chi_square_testing between '{col1}' and '{col2}'")
+
+    # Create a contingency table
+    contingency_table = pd.crosstab(df[col1], df[col2])
+
+    # Perform chi-square test
+    chi2_stat, p_value, dof, expected = stats.chi2_contingency(contingency_table)
+
+    # if p value is smaller than set threshold then signifigance is True
+    p_significance = 'FALSE'
+    if p_value < set_p_value:
+        p_significance = 'TRUE'
+
+    print("Chi-square Statistic:", chi2_stat)
+    print(f"p-value: {p_value} , which is {p_significance}")
+    print("Degrees of Freedom:", dof)
+    print()
+
+    if p_value < set_p_value:
+        return (col1, col2)
+
+
+
+def chi_square_test_all_col(df, col1, columns='all', pvalue=0.05):
+    # If 'all', use all columns
+    if columns == 'all':
+        columns = df.columns  # Use all columns if 'all' is specified
+
+    significant_columns = []  # List to store significant column pairs
+
+    for each_col in columns:
+        # Skip the comparison if col1 and each_col are the same
+        if col1 == each_col:
+            continue
+
+        # Check if the column's dtype is object, category, or string
+        if pd.api.types.is_string_dtype(df[each_col]) or pd.api.types.is_categorical_dtype(df[each_col]):
+            # Call the chi-square testing function
+            result = quick_chi_square_testing(df, col1, each_col, set_p_value=pvalue)
+
+            # Add significant column pairs to the list
+            if result is not None:
+                significant_columns.append(result)
+
+    return significant_columns
+    
+def cramers_v(confusion_matrix):
+    # Calculate Cramér's V for each pair of categorical variables
+    chi2 = chi2_contingency(confusion_matrix)[0]
+    n = confusion_matrix.values.sum()  # Ensure scalar sum
+    if n == 0:
+        return 0  # Avoid division by zero
+    r, k = confusion_matrix.shape
+    return np.sqrt(chi2 / (n * (min(r, k) - 1)))
+
+
+def categorical_correlation_heatmap_v3(df, columns='all'):
+    """
+    Generates a correlation heatmap for categorical columns in a DataFrame.
+
+    Parameters:
+    - df: pandas DataFrame containing the data.
+    - columns: list of column names to include, or 'all' to use all columns.
+
+    Returns:
+    - Heatmap of correlation between categorical columns.
+    """
+    # Select columns
+    if columns == 'all':
+        columns = df.columns
+    else:
+        columns = [col for col in columns if col in df.columns]
+    
+    # Filter categorical columns
+    categorical_cols = [col for col in columns if df[col].dtype == 'object' or df[col].dtype.name == 'category']
+    if not categorical_cols:
+        raise ValueError("No categorical columns found in the specified input.")
+
+
+    n = len(categorical_cols)
+    correlation_matrix = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                correlation_matrix[i, j] = 1.0
+            else:
+                confusion_matrix = pd.crosstab(df[categorical_cols[i]], df[categorical_cols[j]])
+                correlation_matrix[i, j] = cramers_v(confusion_matrix)
+    
+    # Plot heatmap
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(correlation_matrix, annot=True, fmt=".2f", xticklabels=categorical_cols, yticklabels=categorical_cols, cmap="coolwarm")
+    plt.title("Categorical Correlation Heatmap (Cramér's V)")
+    plt.show()
+
+
+
 
 
 # Feature Engineering #
@@ -351,3 +528,8 @@ def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
 
 
 # Modeling #
+
+
+
+# Other # 
+
