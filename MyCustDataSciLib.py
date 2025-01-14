@@ -152,6 +152,27 @@ def test_generate_outlier_df():
     return df_outliers
 
 
+# reorder columns 
+def reorder_column_next_to(df, column_to_move, ref_column_move_next_to):
+    if column_to_move not in df.columns or ref_column_move_next_to not in df.columns:
+        raise ValueError("Both column_to_move and reference_column must exist in the DataFrame.")
+    
+    # Get the current column order
+    columns = list(df.columns)
+    
+    # Remove the column to move
+    columns.remove(column_to_move)
+    
+    # Insert it next to the reference column
+    reference_index = columns.index(ref_column_move_next_to)
+    columns.insert(reference_index + 1, column_to_move)
+    
+    # Return the reordered DataFrame
+    return df[columns]
+
+
+
+
 
 # EDA #
 
@@ -169,12 +190,19 @@ def visualize_outliers(df, col_name):
 
 
 def quick_bar_graph(df, col_name):
-    df[col_name].value_counts().plot(kind='bar', figsize=(5, 2.5))
+    value_counts = df[col_name].value_counts()
+    ax = value_counts.plot(kind='bar', figsize=(5, 5))
     plt.title(f"Bar Graph of '{col_name}' Column")
     plt.xlabel(col_name)
     plt.ylabel('Count')
     plt.xticks(rotation=45)
+    
+    # Annotating count numbers on top of bars
+    for idx, value in enumerate(value_counts):
+        ax.text(idx, value + 0.1, str(value), ha='center', va='bottom', fontsize=9)
+    
     plt.show()
+
 
 def quick_plot_all_categorical_col(df):
     # Identify categorical columns explicitly, excluding numeric types
@@ -215,7 +243,6 @@ def quick_plot_all_numeric_col(df, histo_bins=50):
         quick_histogram(df, col, histo_bins)
 
 
-
 # Create a DataFrame with different data types in each column
 def test_generate_diff_dtype_col_df():
     data = {
@@ -234,21 +261,34 @@ def test_generate_diff_dtype_col_df():
     return df_diff_dtype_col
 
 
-def quick_stacked_bar_graph (df, col_each_stack, each_col):
+def quick_stacked_bar_graph (df, col, col_in_each_stack, figsize=(5, 5)):
     # Create a contingency table
-    contingency_table = pd.crosstab(df[col_each_stack], df[each_col], normalize='columns') * 100
+    contingency_table = pd.crosstab(df[col_in_each_stack], df[col], normalize='columns') * 100
 
     # Plot the stacked bar chart
-    contingency_table.T.plot(kind='bar', stacked=True, figsize=(5, 5), colormap='viridis')
+    contingency_table.T.plot(kind='bar', stacked=True, figsize=figsize, colormap='viridis')
 
     # Add titles and labels
-    plt.title(f"Proportion of '{col_each_stack}' Categories Across '{each_col}'", fontsize=10)
-    plt.xlabel(f"'{each_col}' column", fontsize=10)
-    plt.ylabel(f"Percentage of '{col_each_stack}' Categories", fontsize=10)
-    plt.legend(title=col_each_stack, bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.title(f"Proportion of '{col_in_each_stack}' Categories Across '{col}'", fontsize=10)
+    plt.xlabel(f"'{col}' column", fontsize=10)
+    plt.ylabel(f"Percentage of '{col_in_each_stack}' Categories", fontsize=10)
+    plt.legend(title=col_in_each_stack, bbox_to_anchor=(1.05, 1), loc='upper left')
     #plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
+
+def quick_plot_all_stacked_bar(df, col_to_compare_to_all, figsize=(5, 5) ):
+
+    # Identify categorical columns explicitly, excluding numeric types
+    categorical_cols = [col for col in df.columns if df[col].dtype == 'object' or pd.api.types.is_categorical_dtype(df[col])]
+
+    if len(categorical_cols) == 0:
+        print("No categorical columns found in the DataFrame.")
+        return
+
+    for col in categorical_cols:
+        quick_stacked_bar_graph(df, col_to_compare_to_all, col, figsize)
+
 
 
 def quick_chi_square_testing(df, col1, col2, set_p_value = 0.05): 
