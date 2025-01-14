@@ -176,6 +176,17 @@ def quick_bar_graph(df, col_name):
     plt.xticks(rotation=45)
     plt.show()
 
+def quick_plot_all_categorical_col(df):
+    # Identify categorical columns explicitly, excluding numeric types
+    categorical_cols = [col for col in df.columns if df[col].dtype == 'object' or pd.api.types.is_categorical_dtype(df[col])]
+
+    if len(categorical_cols) == 0:
+        print("No categorical columns found in the DataFrame.")
+        return
+
+    for col in categorical_cols:
+        quick_bar_graph(df, col)
+
 
 def quick_histogram(df, col_name, histo_bins=50):
     # reminder if not enough data points for bins then will have empty bars inbetween. bins merge existing data bar
@@ -190,23 +201,20 @@ def quick_histogram(df, col_name, histo_bins=50):
     plt.xticks(rotation=45)
     plt.show()
 
+def quick_plot_all_numeric_col(df, histo_bins=50):
+    # Identify numeric columns in the DataFrame
+    numeric_columns = df.select_dtypes(include=['number']).columns
 
-def plot_all_graphs(df, col_names='all', histo_bins = 50):
-    if col_names == 'all':
-        col_names = df.columns.tolist()
-    
-    for col_name in col_names:
-        col_type = df[col_name].dtype
-        
-        # Check if the column is numeric (integer or float)
-        if col_type in ['int64', 'int32', 'int16', 'int8', 'float64', 'float32']:
-            quick_histogram(df, col_name, histo_bins)
-        # Check if the column is string, object, or category for bar plot
-        elif col_type in ['object', 'category', 'string']:
-            quick_bar_graph(df, col_name)
-        # If the column is not a supported type, print a message
-        else:
-            print(f"Did not graph column '{col_name}' because it is of type {col_type}.")
+    if len(numeric_columns) == 0:
+        print("No numeric columns found in the DataFrame.")
+        return
+
+    # Iterate through each numeric column and plot the histogram
+    for col in numeric_columns:
+        print(f"Plotting for column: {col}")
+        quick_histogram(df, col, histo_bins)
+
+
 
 # Create a DataFrame with different data types in each column
 def test_generate_diff_dtype_col_df():
@@ -231,14 +239,14 @@ def quick_stacked_bar_graph (df, col_each_stack, each_col):
     contingency_table = pd.crosstab(df[col_each_stack], df[each_col], normalize='columns') * 100
 
     # Plot the stacked bar chart
-    contingency_table.T.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='viridis')
+    contingency_table.T.plot(kind='bar', stacked=True, figsize=(5, 5), colormap='viridis')
 
     # Add titles and labels
-    plt.title(f"Proportion of '{col_each_stack}' Categories Across '{each_col}'", fontsize=14)
-    plt.xlabel(f"'{each_col}' column", fontsize=12)
-    plt.ylabel(f"Percentage of '{col_each_stack}' Categories", fontsize=12)
+    plt.title(f"Proportion of '{col_each_stack}' Categories Across '{each_col}'", fontsize=10)
+    plt.xlabel(f"'{each_col}' column", fontsize=10)
+    plt.ylabel(f"Percentage of '{col_each_stack}' Categories", fontsize=10)
     plt.legend(title=col_each_stack, bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.xticks(rotation=45)
+    #plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
 
@@ -341,6 +349,7 @@ def categorical_correlation_heatmap_v3(df, columns='all'):
     sns.heatmap(correlation_matrix, annot=True, fmt=".2f", xticklabels=categorical_cols, yticklabels=categorical_cols, cmap="coolwarm")
     plt.title("Categorical Correlation Heatmap (Cramér's V)")
     plt.show()
+
 
 
 
