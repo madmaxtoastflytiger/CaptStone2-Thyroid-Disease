@@ -268,6 +268,9 @@ def quick_stacked_bar_graph (df, col, col_in_each_stack, figsize=(5, 5)):
     # Plot the stacked bar chart
     contingency_table.T.plot(kind='bar', stacked=True, figsize=figsize, colormap='viridis')
 
+    # print title in output text to easily copy the column name
+    print(f"Proportion of '{col_in_each_stack}' Categories Across '{col}'")
+
     # Add titles and labels
     plt.title(f"Proportion of '{col_in_each_stack}' Categories Across '{col}'", fontsize=10)
     plt.xlabel(f"'{col}' column", fontsize=10)
@@ -287,6 +290,12 @@ def quick_plot_all_stacked_bar(df, col_to_compare_to_all, figsize=(5, 5) ):
         return
 
     for col in categorical_cols:
+
+        # does not plot a graph of itself vs itself
+        if col == col_to_compare_to_all:
+            return
+        
+        # actually plotting 
         quick_stacked_bar_graph(df, col_to_compare_to_all, col, figsize)
 
 
@@ -350,16 +359,19 @@ def cramers_v(confusion_matrix):
     return np.sqrt(chi2 / (n * (min(r, k) - 1)))
 
 
-def categorical_correlation_heatmap_v3(df, columns='all'):
+def categorical_correlation_heatmap(df, columns='all', threshold=0.5):
     """
-    Generates a correlation heatmap for categorical columns in a DataFrame.
+    Generates a correlation heatmap for categorical columns in a DataFrame and returns
+    column pairs with strong Cramér's V association.
 
     Parameters:
     - df: pandas DataFrame containing the data.
     - columns: list of column names to include, or 'all' to use all columns.
+    - threshold: threshold value for Cramér's V to consider association as strong.
 
     Returns:
     - Heatmap of correlation between categorical columns.
+    - List of column pairs with Cramér's V > threshold.
     """
     # Select columns
     if columns == 'all':
@@ -372,9 +384,9 @@ def categorical_correlation_heatmap_v3(df, columns='all'):
     if not categorical_cols:
         raise ValueError("No categorical columns found in the specified input.")
 
-
     n = len(categorical_cols)
     correlation_matrix = np.zeros((n, n))
+    strong_associations = []
 
     for i in range(n):
         for j in range(n):
@@ -382,13 +394,18 @@ def categorical_correlation_heatmap_v3(df, columns='all'):
                 correlation_matrix[i, j] = 1.0
             else:
                 confusion_matrix = pd.crosstab(df[categorical_cols[i]], df[categorical_cols[j]])
-                correlation_matrix[i, j] = cramers_v(confusion_matrix)
+                value = cramers_v(confusion_matrix)
+                correlation_matrix[i, j] = value
+                if value > threshold and i < j:  # Avoid duplicate pairs
+                    strong_associations.append((categorical_cols[i], categorical_cols[j], value))
     
     # Plot heatmap
     plt.figure(figsize=(12, 10))
     sns.heatmap(correlation_matrix, annot=True, fmt=".2f", xticklabels=categorical_cols, yticklabels=categorical_cols, cmap="coolwarm")
     plt.title("Categorical Correlation Heatmap (Cramér's V)")
     plt.show()
+
+    return strong_associations
 
 
 
