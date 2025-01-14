@@ -348,6 +348,13 @@ def categorical_correlation_heatmap_v3(df, columns='all'):
 
 # Feature Engineering #
 
+
+# Modeling #
+
+
+
+# Other # 
+
 # detect unique values & if col have binary and unary data 
 def print_unique_values_summary(df, selected_col='all'):
     '''
@@ -460,7 +467,70 @@ def test_generate_binary_unary_df():
 
 
 # Convert specified values in a column to binary 1 or 0
-def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
+def merge_into_new_binary_col(df, col_name, values_to_cat1, values_to_cat0, new_col_name, category_1, category_0):
+    '''
+    Converts specified values in a column to user-defined categories (category_1 and category_0),
+    adds the result to a new column, and returns the updated dataframe along with lists of
+    incompatible values and rows.
+
+    Parameters:
+        df (pd.DataFrame): Input dataframe.
+        col_name (str): Column to modify.
+        values_to_cat1 (str or list): Value(s) to be converted to category_1.
+        values_to_cat0 (str or list): Value(s) to be converted to category_0.
+        category_1 (str): The label for the first category.
+        category_0 (str): The label for the second category.
+        new_col_name (str): Name of the new column to add with the converted categories.
+
+    Returns:
+        pd.DataFrame: Updated dataframe.
+        list: List of incompatible value tuples (row index, value).
+        list: List of row indices with incompatible values.
+    '''
+
+    # Normalize input lists (convert to list if not already iterable)
+    if isinstance(values_to_cat1, str):
+        values_to_cat1 = [values_to_cat1]
+    if isinstance(values_to_cat0, str):
+        values_to_cat0 = [values_to_cat0]
+
+    # Normalize the input lists (convert all elements to lowercase strings for consistency)
+    normalized_values_to_cat1 = {str(val).strip().lower() for val in values_to_cat1}
+    normalized_values_to_cat0 = {str(val).strip().lower() for val in values_to_cat0}
+
+    incompatible_rows_info = []  # List to record incompatible values (as tuples)
+    incompatible_rows = []  # List to record rows with incompatible values
+
+    # Check for incompatible values
+    for idx, value in df[col_name].items():
+        # Normalize the value from the dataframe
+        cleaned_value = str(value).strip().lower()
+
+        # Check if the value is neither in values_to_cat1 nor values_to_cat0
+        if cleaned_value not in normalized_values_to_cat1 | normalized_values_to_cat0:
+            incompatible_rows_info.append((idx, value))  # Record incompatible value with row index
+            incompatible_rows.append(idx)  # Record row index of incompatible value
+
+    # If there is at least one incompatible value, return the original dataframe and lists
+    if len(incompatible_rows_info) != 0:
+        print(f'{col_name} column has {len(incompatible_rows)} incompatible rows')
+        return df, incompatible_rows_info, incompatible_rows
+    else:
+        # Create a new column with the specified categories
+        df[new_col_name] = df[col_name].apply(
+            lambda x: category_1 if str(x).strip().lower() in normalized_values_to_cat1
+            else (category_0 if str(x).strip().lower() in normalized_values_to_cat0 else x)
+        )
+
+        # Feedback that conversion was successful
+        print(f'New column "{new_col_name}" has been added with the converted categories')
+
+    # Return the updated dataframe and the lists of incompatibles
+    return df, incompatible_rows_info, incompatible_rows
+
+
+# Convert specified values in a column to binary 1 or 0
+def convert_column_to_binary(df, col_name, values_to_1, values_to_0,):
     '''
     Converts specified values to binary 1 and 0 based on user input (as strings or lists)
     and returns the updated dataframe, along with lists of incompatible values and rows.
@@ -527,9 +597,5 @@ def convert_column_to_binary(df, col_name, values_to_1, values_to_0):
 
 
 
-# Modeling #
 
-
-
-# Other # 
 
