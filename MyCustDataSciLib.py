@@ -293,7 +293,7 @@ def quick_plot_all_stacked_bar(df, col_to_compare_to_all, figsize=(5, 5) ):
 
         # does not plot a graph of itself vs itself
         if col == col_to_compare_to_all:
-            return
+            continue # skips over
         
         # actually plotting 
         quick_stacked_bar_graph(df, col_to_compare_to_all, col, figsize)
@@ -325,7 +325,6 @@ def quick_chi_square_testing(df, col1, col2, set_p_value = 0.05):
         return (col1, col2)
 
 
-
 def chi_square_test_all_col(df, col1, columns='all', pvalue=0.05):
     # If 'all', use all columns
     if columns == 'all':
@@ -349,6 +348,7 @@ def chi_square_test_all_col(df, col1, columns='all', pvalue=0.05):
 
     return significant_columns
     
+
 def cramers_v(confusion_matrix):
     # Calculate Cramér's V for each pair of categorical variables
     chi2 = chi2_contingency(confusion_matrix)[0]
