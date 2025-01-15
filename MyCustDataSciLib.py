@@ -4,6 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.stats import chi2_contingency
+from kmodes.kmodes import KModes
+
 
 
 # Data Wrangling # 
@@ -188,20 +190,37 @@ def visualize_outliers(df, col_name):
     plt.xlabel(col_name, fontsize=12)
     plt.show()
 
-
 def quick_bar_graph(df, col_name):
     value_counts = df[col_name].value_counts()
-    ax = value_counts.plot(kind='bar', figsize=(5, 5))
-    plt.title(f"Bar Graph of '{col_name}' Column")
+    total_count = value_counts.sum()
+    
+    # Generate the title for the graph
+    title = f"Bar Graph of '{col_name}' Column"
+    print(f"Graph Title: {title}")  # Print the title for easy copy-paste
+    
+    ax = value_counts.plot(kind='bar', figsize=(10, 5))
+    plt.title(title)
     plt.xlabel(col_name)
     plt.ylabel('Count')
     plt.xticks(rotation=45)
     
-    # Annotating count numbers on top of bars
-    for idx, value in enumerate(value_counts):
-        ax.text(idx, value + 0.1, str(value), ha='center', va='bottom', fontsize=9)
+    # Flag for checking categories with less than 5%
+    has_small_percentage = False
     
+    # Annotating count and percentage on top of bars
+    for idx, value in enumerate(value_counts):
+        percentage = (value / total_count) * 100
+        if percentage < 7.5:
+            has_small_percentage = True
+        ax.text(idx, value + 0.1, f"{value} ({percentage:.1f}%)", ha='center', va='bottom', fontsize=9)
+    
+    # Print a message if any category has less than 5%
+    if has_small_percentage:
+        print("Note: Some categories have less than 10% representation.")
+
     plt.show()
+    
+    
 
 
 def quick_plot_all_categorical_col(df):
@@ -408,7 +427,31 @@ def categorical_correlation_heatmap(df, columns='all', threshold=0.5):
     return strong_associations
 
 
+def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbose=1, kmode_col_name = 'kmode_cluster'):
+    # Initialize the k-modes model
+    kmodes = KModes(n_clusters=n_clusters, init=init, n_init=n_init, verbose=verbose)
 
+    # Fit the model and predict cluster assignments
+    clusters = kmodes.fit_predict(df)
+
+    # Make a copy of df
+    df_kmode = df.copy()
+
+    # Add cluster assignments to the dataframe
+    df_kmode['kmode_cluster'] = clusters
+
+    # Convert the 'kmode_cluster' column to a category (or object)
+    df_kmode[kmode_col_name] = df_kmode['kmode_cluster'].astype('category')  # For category type as works with my other code
+    # Alternatively, for object type: df_kmode['kmode_cluster'] = df_kmode['kmode_cluster'].astype('object')
+
+    # Print the resulting dataframe
+    print(df_kmode)
+
+    # Print cluster centroids
+    print("Cluster centroids:")
+    print(kmodes.cluster_centroids_)
+
+    return df_kmode
 
 
 
