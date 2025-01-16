@@ -456,6 +456,54 @@ def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbos
 
 
 # Feature Engineering #
+def get_binary_columns(df, selected_columns='all'):
+    binary_column_info = []  # List to store tuples of columns with exactly two unique values
+    binary_column_names = []  # List to store the names of binary columns
+
+    # If 'all' is passed, use all columns in the DataFrame
+    if selected_columns == 'all':
+        selected_columns = df.columns.tolist()
+
+    # Check if selected columns exist in the DataFrame
+    for col_name in selected_columns:
+        if col_name in df.columns:
+            # Check if the column has exactly two unique values
+            if len(df[col_name].unique()) == 2:
+                # Extract the two unique values
+                unique_values = df[col_name].unique()
+                binary_value_1, binary_value_2 = unique_values[0], unique_values[1]
+
+                # Create a tuple with column name and the two unique values
+                binary_column_info.append((col_name, str(binary_value_1), str(binary_value_2)))
+                # Append the column name to the binary column names list
+                binary_column_names.append(col_name)
+
+    return binary_column_info, binary_column_names
+
+
+def get_unary_columns(df, selected_columns='all'):
+    unary_column_info = []  # List to store tuples of columns with exactly one unique value
+    unary_column_names = []  # List to store the names of unary columns
+
+    # If 'all' is passed, use all columns in the DataFrame
+    if selected_columns == 'all':
+        selected_columns = df.columns.tolist()
+
+    # Check if selected columns exist in the DataFrame
+    for col_name in selected_columns:
+        if col_name in df.columns:
+            # Check if the column has exactly one unique value
+            if len(df[col_name].unique()) == 1:
+                # Get the single unique value
+                unique_value = df[col_name].unique()[0]
+
+                # Create a tuple with column name and the single unique value
+                unary_column_info.append((col_name, str(unique_value)))
+                # Append the column name to the unary column names list
+                unary_column_names.append(col_name)
+
+    return unary_column_info, unary_column_names
+
 
 
 # Modeling #
@@ -512,54 +560,6 @@ def print_unique_values_summary(df, selected_col='all'):
     else:
         print("FUNCTION FINISHED, detected no columns with only 1 unique values which is good.")
 
-
-def get_binary_columns(df, selected_columns='all'):
-    binary_column_info = []  # List to store tuples of columns with exactly two unique values
-    binary_column_names = []  # List to store the names of binary columns
-
-    # If 'all' is passed, use all columns in the DataFrame
-    if selected_columns == 'all':
-        selected_columns = df.columns.tolist()
-
-    # Check if selected columns exist in the DataFrame
-    for col_name in selected_columns:
-        if col_name in df.columns:
-            # Check if the column has exactly two unique values
-            if len(df[col_name].unique()) == 2:
-                # Extract the two unique values
-                unique_values = df[col_name].unique()
-                binary_value_1, binary_value_2 = unique_values[0], unique_values[1]
-
-                # Create a tuple with column name and the two unique values
-                binary_column_info.append((col_name, str(binary_value_1), str(binary_value_2)))
-                # Append the column name to the binary column names list
-                binary_column_names.append(col_name)
-
-    return binary_column_info, binary_column_names
-
-
-def get_unary_columns(df, selected_columns='all'):
-    unary_column_info = []  # List to store tuples of columns with exactly one unique value
-    unary_column_names = []  # List to store the names of unary columns
-
-    # If 'all' is passed, use all columns in the DataFrame
-    if selected_columns == 'all':
-        selected_columns = df.columns.tolist()
-
-    # Check if selected columns exist in the DataFrame
-    for col_name in selected_columns:
-        if col_name in df.columns:
-            # Check if the column has exactly one unique value
-            if len(df[col_name].unique()) == 1:
-                # Get the single unique value
-                unique_value = df[col_name].unique()[0]
-
-                # Create a tuple with column name and the single unique value
-                unary_column_info.append((col_name, str(unique_value)))
-                # Append the column name to the unary column names list
-                unary_column_names.append(col_name)
-
-    return unary_column_info, unary_column_names
 
 
 def test_generate_binary_unary_df():
