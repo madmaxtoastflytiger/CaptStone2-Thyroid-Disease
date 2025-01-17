@@ -1,0 +1,134 @@
+Slide 1
+For context I will be presenting to my project manager of the company developing the drug, so half technical and half show quickly to not waste their time.
+
+My name is Alex Lai and I would like to show a quick prototype that we have been working on for the company’s new thyroid cancer drug treatment.
+
+
+Slide 2
+These are all the contents that we will be going over for today.
+
+
+Slide 3
+To make a predictive model for thyroid cancer patients to see how likely after treatment their cancer will reoccur.
+This model is especially useful for doctors to use as an eligibility test to see if the patient is right for the treatment.
+
+Accuracy has to be above 95% to be considered successful. 
+
+Stakeholders would be the company developing the treatment, doctors, and the patient themselves 
+
+Solution Space will most likely be creating the Decision Tree based model using Pandas.  
+
+Constraints would be the limited amount of data to train and the quality of the data.
+
+Time Frame to deliver this project will be within the next 3 months.
+
+
+Slide 4
+We got the data from UCI Machine learning repository and kaggle. We have permission due to the CC 4.0 attribution license which we are attributing to them now 
+
+
+Slide 5
+Now the real meat of the presentation
+Each row represent a patient that has some form of Thyroid Cancer. We have 383 rows / patient data.
+This data practically all categorical. As you can see up here, these are all the columns. 
+
+I standardized the columns to make them all lowercase and replace spaces with underscore ,
+
+also fixed the typo in hx_radiotherapy, 
+
+and rename ‘recurred’ column to recurrence to make it more standardized for other medical professional terms as trying to remove as much ambiguity as possible. 
+I handled all remaining standard data cleaning, fixed up all the missing values, duplicate values, and rename misspelled values.
+
+Then I quickly merge specific data together into new columns which EDA may want to use.
+
+Age is our only numeric column but to make it categorical with the rest I bin it into age groups.
+
+The other categories I merged had values that were somewhat duplicate and think maybe combining them can create better variance info for the model, then added those as new columns.
+For example, the ‘response’ column had 2 categories that were about different types of negative response so I merged them into one.
+So back our ‘problem identification’, we are trying to make a model that can input new patient data and predict if thyroid cancer come back will occur after treatment.
+
+Thus the column we would be focusing on is ‘recurrence’ 
+
+
+Slide 6
+For EDA we did lots of data, If you want more details you can request to see all our data,
+But I will go through the more interesting data
+
+
+Slide 7
+This is an example of how we merge the categories in a column into new columns.
+
+
+Slide 8
+So to Show which columns have correlation with each other, I made a Cramer V correlation heat map. 
+Just to give note the limitation, all the numbers represent association but does not say that if the association is direct or inverse. This is because all our columns are categorical and not numeric 
+
+I will be checking to see which features have strong associations with each other, but mainly focusing on 'recurrence' as that is what we will be used for label in training.
+
+Merging the 'response' column into 'response_3cat' was a good move as combining both negative categories together gave it more variance info. However that column is related to post treatment and the goal of this project is to make a predictive model that is pretreatment based on info from examination.
+
+'Risk' column has high association, but that feature is inputted vaguely by the doctor.
+
+'Adenopathy' and 'n' column has high association and can work as is less vague and more clear observation based. Both are similar as related to the observations of the appearance of the disease.
+
+It seems merging the 't' column into 4 categories made it have slight weaker association with recurrence. This means that the different sub categories in the 't' column does contain important variance info.
+
+It seems merging the 'stage' column into 4 categories has no difference.
+
+Interesting experimenting with k mode clustering the data into 3 groups have high recurrence, will have to look into it further if meaningful or relying heavily on the recurrence column.
+
+
+Slide 9
+We also perform K mode clustering to see if there are specific patterns of groups, which may hold promise so we included as a new column.
+
+
+Slide 10
+Here is the recurrence column which will be out model’s labels 
+Exploring noticed alot of data imbalance with this data set. Which we will have to address later 
+
+
+Slide 11
+Not much to go over here
+We encode all binary data using dummy encoding
+For non binary categorical data we tried both One hot encoding and label encoding. 
+After some times thinking we decided to use label encoding as researched it is better for the tree based modeling systems we are about to use.
+
+
+Slide 12
+Due to all our features being categorical data, we find it best to use tree based models.
+We made 3 models (basic decision tree, Random Forest, Gradient Boosting), and for each of them I tried another version using methods to balance out the test data.
+Yes this is a lot of data but those that need a quick read 
+
+main thing you would just need to focus on is the F1 scores for both True and False, and accuracy metrics. The higher the score the better.
+The rest of the info is available if you want a more technical observation. 
+As you can see, all 6 models reach the required accuracy of 95% from the problem identification.
+Both ensemble decision trees method work really great and can natively handle imbalance data well. But the random forest method seems suspiciously high precision and recalls
+And of course balancing the data pretty much increase all stats in all models except of decision tree for some reason. 
+
+In the end I decide to go with the Gradient Booster with SMOTE as seems to have the a really high performance while being less suspicious of overfitting.
+
+
+Slide 13
+Conclusion:
+We came in trying to make an eligibility test model for doctors to predict if our company’s durg will 
+We will be using the Gradient Booster with SMOTE model do it’s it’s high F1 scores and accuracy.
+
+Future works
+Currently for this prototype our data amount is lacking, and I would love for our company to partner with hospitals to get more consented user data.
+Also I would like to do more experimentation on all the models to see if they are overfitting or not,
+and research more on Random Forest to see what is up with it’s high precision and recall.I am more partial to random forest as I love the concept of it’s parallel computing which means when we do partner with hospitals to get more data this model would be easily more scalable, or future proofing it.
+WWe can further expand on this model more to include cross reaction chance with other drugs or stats
+
+Possible issues
+I do not know if management will find using the CC 4.0 Attribution license data an issue, as if we release the product with this data set then we would have to say somewhere on the product this data set is included. If needed when we do get the hospital data we can remove this dataset and it’s label.
+Overall I think we are on track to fine tuning and finishing up this model for production.
+
+
+Slide 14
+Thank you that’s all, any questions? 
+
+
+
+
+Mentor feedback
+Need to do cross validation after choosing the model
