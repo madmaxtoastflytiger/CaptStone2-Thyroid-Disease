@@ -6,6 +6,8 @@ from scipy import stats
 from scipy.stats import chi2_contingency
 from kmodes.kmodes import KModes
 
+import webbrowser
+
 
 
 # Data Wrangling # 
@@ -219,8 +221,6 @@ def quick_bar_graph(df, col_name):
         print("Note: Some categories have less than 10% representation.")
 
     plt.show()
-    
-    
 
 
 def quick_plot_all_categorical_col(df):
@@ -427,7 +427,7 @@ def categorical_correlation_heatmap(df, columns='all', threshold=0.5):
     return strong_associations
 
 
-def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbose=1, kmode_col_name = 'kmode_cluster'):
+def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbose=1, kmode_col_name='kmode_cluster'):
     # Initialize the k-modes model
     kmodes = KModes(n_clusters=n_clusters, init=init, n_init=n_init, verbose=verbose)
 
@@ -437,12 +437,8 @@ def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbos
     # Make a copy of df
     df_kmode = df.copy()
 
-    # Add cluster assignments to the dataframe
-    df_kmode['kmode_cluster'] = clusters
-
-    # Convert the 'kmode_cluster' column to a category (or object)
-    df_kmode[kmode_col_name] = df_kmode['kmode_cluster'].astype('category')  # For category type as works with my other code
-    # Alternatively, for object type: df_kmode['kmode_cluster'] = df_kmode['kmode_cluster'].astype('object')
+    # Add cluster assignments to the dataframe using the specified column name
+    df_kmode[kmode_col_name] = pd.Series(clusters).astype('category')  # Convert to Pandas Series first, then assign as category
 
     # Print the resulting dataframe
     print(df_kmode)
@@ -452,6 +448,9 @@ def quick_add_kmode_cluster_col(df, n_clusters=3, init='Huang', n_init=5, verbos
     print(kmodes.cluster_centroids_)
 
     return df_kmode
+
+
+
 
 
 
@@ -511,6 +510,13 @@ def get_unary_columns(df, selected_columns='all'):
 
 
 # Other # 
+
+# add suffix to all columns 
+def add_suffix_to_columns(df, suffix):
+    # Use the DataFrame's rename method with a lambda function to modify column names
+    df_with_suffix = df.rename(columns=lambda col: f"{col}{suffix}")
+    return df_with_suffix
+
 
 # detect unique values & if col have binary and unary data 
 def print_unique_values_summary(df, selected_col='all'):
@@ -705,6 +711,10 @@ def convert_column_to_binary(df, col_name, values_to_1, values_to_0,):
     return df, incompatible_rows_info, incompatible_rows
 
 
-
+def quick_df_to_browser(df):
+    # Save the DataFrame to an HTML file
+    df.to_html('dataframe_view.html')
+    # Open the HTML file in your default web browser
+    webbrowser.open('dataframe_view.html')
 
 
