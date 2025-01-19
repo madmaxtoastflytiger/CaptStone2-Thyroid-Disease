@@ -110,16 +110,16 @@ In the end I decide to go with the Gradient Booster with SMOTE as seems to have 
 
 Slide 13
 Conclusion:
-We came in trying to make an eligibility test model for doctors to predict if our company’s durg will 
-We will be using the Gradient Booster with SMOTE model do it’s it’s high F1 scores and accuracy.
+We came in trying to make an eligibility test model for doctors to predict if our company’s drug will prevent thyroid cancer from recurring post-treatment.
+We will be using the Gradient Booster with SMOTE model due it’s it’s high F1 scores and accuracy.
 
-Future works
+Future works:
 Currently for this prototype our data amount is lacking, and I would love for our company to partner with hospitals to get more consented user data.
 Also I would like to do more experimentation on all the models to see if they are overfitting or not,
-and research more on Random Forest to see what is up with it’s high precision and recall.I am more partial to random forest as I love the concept of it’s parallel computing which means when we do partner with hospitals to get more data this model would be easily more scalable, or future proofing it.
+and research more on Random Forest to see what is up with it’s high precision and recall. I am more partial to random forest as I love the concept of it’s parallel computing which means when we do partner with hospitals to get more data this model would be easily more scalable, or future proofing it.
 WWe can further expand on this model more to include cross reaction chance with other drugs or stats
 
-Possible issues
+Possible issues:
 I do not know if management will find using the CC 4.0 Attribution license data an issue, as if we release the product with this data set then we would have to say somewhere on the product this data set is included. If needed when we do get the hospital data we can remove this dataset and it’s label.
 Overall I think we are on track to fine tuning and finishing up this model for production.
 
